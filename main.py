@@ -2,6 +2,7 @@ import pandas as pd
 import requests
 import json
 import re
+import os
 
 preset = '''
 {
@@ -26,6 +27,32 @@ preset = '''
   ]
 }
 '''
+
+preset2 = '''
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0,
+          0
+        ]
+      },
+      "type": "Feature",
+      "properties": {
+        "category": "patisserie",
+        "name": "none",
+        "phone": "123456789",
+        "storeid": "0"
+      }
+    }
+'''
+
+def writetojsonfile(path, filename, data):
+    filepathnamewext='./'+ path + '/' + filename + '.json'
+    with open(filepathnamewext,'w') as fp:
+        json.dump(data,fp,indent=4)
+
+final={}
 
 # preset vai ser a base, entao read only o que vai ser static: geometry type, type feature, category fixed,
 # vou tirar: "hours": "10am - 6pm",  description tb: "description": "Modern twists on classic pastries. We're part of
@@ -73,46 +100,79 @@ for tamanho_coluna in excel['CEP']:
 # print(lista_telefone)
 # print(lista_cep)
 
-print('---')
-
 # requisitar api da google para fazer endereco para coordenada
 
-API = 'AIzaSyBs39VoT375Fz31ONR4liU1Vn06hDV95PE'
-url = "https://maps.googleapis.com/maps/api/geocode/json?address=" + lista_uf[0] + lista_cep[0] + lista_cidade[0] + \
-      lista_bairro[0] + lista_logradouro[0] + "&key=" + API
-r = requests.get(url)
-resultado_api = json.loads(r.content)
+#for i in tamanho_coluna:
 
-# TODO fazer loop para todos os clientes
-coord_lat = resultado_api['results'][0]['geometry']['location']['lat']
-coord_lng = resultado_api['results'][0]['geometry']['location']['lng']
-# print(coord_lat)
-# print(coord_lng)
+tamanho_row_excel=excel.shape[0]-1
+for i in range(tamanho_row_excel):
 
-print('-----')
+    API = 'AIzaSyBs39VoT375Fz31ONR4liU1Vn06hDV95PE'
+    url = "https://maps.googleapis.com/maps/api/geocode/json?address=" + lista_uf[i] + lista_cep[i] + lista_cidade[i] + lista_bairro[i] + lista_logradouro[i] + "&key=" + API
+    r = requests.get(url)
+    resultado_api = json.loads(r.content)
 
-data = json.loads(preset)
+    # TODO fazer loop para todos os clientes
+    coord_lat = resultado_api['results'][0]['geometry']['location']['lat']
+    coord_lng = resultado_api['results'][0]['geometry']['location']['lng']
+    # print(coord_lat)
+    # print(coord_lng)
 
-# print(df.info())
-print(type(data['features']))
-print(data)
+    #carrega um novo para data
+    data = json.loads(preset)
 
-for features in data['features']:
-    #cord
-    features['geometry']['coordinates'][0] = coord_lat
-    features['geometry']['coordinates'][1] = coord_lng
-    # print(features['geometry']['coordinates'])
+    # print(df.info())
+    #print(type(data['features']))
+    #print(data)
 
-    #razao
-    tmp_razao = lista_razao[0]
-    tmp_razao_regex = re.sub(r'[0-9]', "", tmp_razao)
-    features['properties']['name'] = tmp_razao_regex
+    if not os.path.isfile('output.json'):
+    # se o output esta vazio criar a base com dados
+        #cord
+        for features in data['features']:
+            features['geometry']['coordinates'][0] = coord_lat
+            features['geometry']['coordinates'][1] = coord_lng
+            # print(features['geometry']['coordinates'])
 
-    #telefone por phone
-    #TODO UF no ddd se precisar
-    features['properties']['phone']=str(lista_telefone[0])
+            #razao
+            tmp_razao = lista_razao[i]
+            tmp_razao_regex = re.sub(r'[0-9]', "", tmp_razao)
+            features['properties']['name'] = tmp_razao_regex
 
-    #storeID incremnetado
-    features['properties']['storeid']='0'
+            #telefone por phone
+            #TODO UF no ddd se precisar
+            features['properties']['phone']=str(lista_telefone[i])
 
-print(data)
+            #storeID incremnetado
+            features['properties']['storeid']=str(i)
+            writetojsonfile('./', 'output', data)
+        print('if')
+    else:
+        tmp_razao = lista_razao[i]
+        tmp_razao_regex = re.sub(r'[0-9]', "", tmp_razao)
+        with open('output.json') as jsonfile:
+            output=json.load(jsonfile)
+            tmp=output['features']
+            new={'geometry':
+                     {"type": "Point",
+                "coordinates": [
+                    coord_lat,
+                    coord_lng
+                ]},
+                 "type": "Feature",
+                 "properties": {
+                     "category": "patisserie",
+                     "name": tmp_razao_regex,
+                     "phone": str(lista_telefone[i]),
+                     "storeid":str(i)
+                 }
+                 }
+            tmp.append(new)
+
+        writetojsonfile('./','output',output)
+        print('else')
+
+#print(data)
+
+#jsondump=json.dumps(data)
+#print(jsondump)
+#writetojsonfile('./','output',data)
