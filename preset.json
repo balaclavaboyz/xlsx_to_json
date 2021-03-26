@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0,
+          0
+        ]
+      },
+      "type": "Feature",
+      "properties": {
+        "category": "patisserie",
+        "name": "Josie's Patisserie Mayfair",
+        "phone": "+44 20 1234 5678",
+        "storeid": "0"
+      }
+    }
+  ]
+}
