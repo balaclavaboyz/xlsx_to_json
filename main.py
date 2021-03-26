@@ -4,7 +4,7 @@ import json
 import re
 
 preset = '''
-    {
+{
   "type": "FeatureCollection",
   "features": [
     {
@@ -18,8 +18,8 @@ preset = '''
       "type": "Feature",
       "properties": {
         "category": "patisserie",
-        "name": "Josie's Patisserie Mayfair",
-        "phone": "+44 20 1234 5678",
+        "name": "none",
+        "phone": "123456789",
         "storeid": "0"
       }
     }
